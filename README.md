@@ -1,14 +1,15 @@
-# WaterDetect
+# WaterQuality
 
 [![DOI](https://zenodo.org/badge/224832878.svg)](https://zenodo.org/badge/latestdoi/224832878)
 
 ## Synopsis
 
-WaterDetect is an end-to-end algorithm to generate open water cover mask, specially conceived for L2A Sentinel 2 imagery from [MAJA](https://logiciels.cnes.fr/en/content/maja)<sup>1</sup>  processor, without any a priori knowledge on the scene. It can also be used for Landsat 8 images and for other multispectral clustering/segmentation tasks.<br>
-
-The water masks produced by WaterDetect were primarily designed for water quality product computation (Obs2Co processing chain) and are also used for multi-temporal water maps (Surfwater processing chain). Both chains are supported by the "SWOT-Downstream" and TOSCA programs by CNES. Products are provided by the THEIA / Hydroweb-NG platform. 
-
-The WaterDetect algorithm uses a multidimensional agglomerative clustering technique on a subsample of the scene's pixels, to group them in classes, and a naive bayes classifier to generalize the results for the whole scene, as summarized in the following picture:
+The WaterQuality package extends the functionalities of the WaterDetect package to calculate continental water quality parameters from satellite reflectances. It has been specially conceived for L2A Sentinel 2 imagery from [MAJA](https://logiciels.cnes.fr/en/content/maja)<sup>1</sup>  processor, and the parameter is calculated just where there exist water, according to the waterdetect mask. Several inversion algorithms from the literature have been implemented:<br>
+* Chlorophyll - Lins
+* Chlorophyll - Gitelson
+* CDOM absorption - Brezonik
+* Turbidity - Dogliotti
+* SPM - adapted from Nechad at the GET laboratory
 
 ![Screenshot](GraphicalAbstract.JPG)
 
@@ -28,6 +29,7 @@ scipy>=1.3.2
 scikit-learn>=0.22
 skimage>=0.16.2
 numpy>=1.17
+waterdetect>=1.5
 ```
 The test_dependencies.py can be used to check if all libraries are loading correctly. Simply run:
 
