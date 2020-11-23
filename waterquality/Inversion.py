@@ -31,10 +31,43 @@ def get_coefs(algoritm, rowname, sat=None):
 
 
 class DWInversionAlgos:
+
     def __init__(self):
         self.m = [0.005, 4.26, 0.52, 10.8]
         self.gamma = 0.265
         self.nodata = np.nan
+
+        self.invert_funcs = {'spm-get': {'func': self.SPM_GET,
+                                         'bands': ['Red', 'Nir'],
+                                         'sensor': True},
+
+                             'turb-dogliotti': {'func': self.turb_Dogliotti,
+                                                'bands': ['Red', 'Nir'],
+                                                'sensor': False},
+
+                             'chl-lins': {'func': self.chl_lins,
+                                                'bands': ['Red', 'RedEdg1'],
+                                                'sensor': False},
+
+                             'aCDOM-brezonik': {'func': self.aCDOM_brezonik,
+                                          'bands': ['Red', 'RedEdg2'],
+                                          'sensor': True},
+
+                             'chl_giteslon': {'func': self.chl_giteslon,
+                                          'bands': ['Red', 'RedEdg1', 'RedEdg2'],
+                                          'sensor': True},
+                             }
+
+    def invert_param(self, quality_param, sensor, raster_bands):
+        parameter = None
+
+        if quality_param in self.invert_funcs.keys():
+            args = [raster_bands[band] for band in self.invert_funcs[quality_param]['bands']]
+            if self.invert_funcs[quality_param]['sensor']: args.append(sensor)
+
+            parameter = self.invert_funcs[quality_param]['func'](*args)
+
+        return parameter
 
     def Kd_lee(self, a, bb, bbw, sza):
         """ Computes diffuse light attenuation Kd
