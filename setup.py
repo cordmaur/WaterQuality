@@ -9,7 +9,7 @@ long_description = short_description
 
 setuptools.setup(
     name="waterquality", # Replace with your own username
-    version="1.0.0",
+    version="1.0.3",
     author="Maurício Cordeiro",
     author_email="cordmaur@gmail.com",
     description=short_description,
@@ -29,7 +29,7 @@ setuptools.setup(
     include_package_data=True,
     package_data={'waterquality': ['WaterDetect.ini', 'auxdata/*.txt']},
     install_requires=[
-        'waterdetect>=1.5.2',
+        'waterdetect=1.5.3',
         'numpy>=1.17',
         'scikit_learn>=0.23',
         'matplotlib>=3.3',

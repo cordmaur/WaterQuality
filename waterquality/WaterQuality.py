@@ -24,9 +24,22 @@ class DWWaterQuality(DWWaterDetect):
                           config_file=config_file,
                           post_callback=cls.callback_inversions)
 
+    @classmethod
+    def run_single(cls, image_folder, output_folder, shape_file=None, product='S2_THEIA', config_file=None,
+                  post_callback=None):
+
+        # # if there is an inversion, create an instance of Algorithms class, None otherwise
+        # self.inversion_algos = DWInversion.DWInversionAlgos() if self.config.inversion else None
+
+        return super().run_single(image_folder=image_folder,
+                                  output_folder=output_folder,
+                                  shape_file=shape_file,
+                                  product=product,
+                                  config_file=config_file,
+                                  post_callback=cls.callback_inversions)
+
 
     def callback_inversions(self, dw_image, pdf_merger):
-
         # test if the .ini file has the inversion section
         try:
             if self.config.inversion:
@@ -58,18 +71,28 @@ class DWWaterQuality(DWWaterDetect):
         # POR ENQUANTO BASTA PASSARMOS O DICIONÁRIO DE BANDAS E O PRODUTO PARA TODOS
         mask = self.loader.invalid_mask
 
+        # save results to quality_parameters
+        self.quality_parameters = {}
+
         for quality_param in self.config.parameter.replace(' ', '').split(','):
             print(f'Calculating {quality_param} parameter.')
 
             # Ask for DWInversionAlgos to calculate the parameter matrix
-            parameter = inversion_algos.invert_param(quality_param, self.loader.product, self.loader.raster_bands)
+            parameter = inversion_algos.invert_param(quality_param,
+                                                     self.loader.product,
+                                                     self.loader.raster_bands,
+                                                     self.loader.invalid_mask,
+                                                     self.config.negative_values)
 
             if parameter is not None:
                 # clear the parameters array and apply the Water mask, with no_data_values
                 parameter = DWutils.apply_mask(parameter,
-                                           ~(np.where(dw_image.water_mask == 255, 0, dw_image.water_mask).astype(
-                                             bool)),
-                                           -9999)
+                                               ~(np.where(dw_image.water_mask == 255, 0, dw_image.water_mask).astype(
+                                                 bool)),
+                                               -9999)
+
+                # save the parameter to be accessed
+                self.quality_parameters.update({quality_param: parameter})
 
                 # save the calculated parameter
                 self.saver.save_array(parameter, quality_param, no_data_value=-9999)
@@ -93,7 +116,7 @@ class DWWaterQuality(DWWaterDetect):
                                                                         colormap=self.config.colormap,
                                                                         uniform_distribution=self.config.uniform_distribution,
                                                                         no_data_value=-9999))
-        return
+        return parameter
 
     def calc_param_limits(self, parameter, no_data_value=-9999):
 

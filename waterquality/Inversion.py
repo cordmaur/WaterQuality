@@ -59,16 +59,22 @@ class DWInversionAlgos:
                                           'sensor': True},
                              }
 
-    def invert_param(self, quality_param, sensor, raster_bands):
+    def invert_param(self, quality_param, sensor, raster_bands, invalid_mask, negative_values='mask'):
         parameter = None
 
         if quality_param in self.invert_funcs.keys():
+
             # create the list of bands
-            args = [DWutils.remove_negatives(raster_bands[band]) for band in self.invert_funcs[quality_param]['bands']]
+            args = [DWutils.remove_negatives(raster_bands[band],
+                                             mask=invalid_mask,
+                                             negative_values=negative_values)
+                    for band in self.invert_funcs[quality_param]['bands']]
 
             if self.invert_funcs[quality_param]['sensor']: args.append(sensor)
 
             parameter = self.invert_funcs[quality_param]['func'](*args)
+
+            parameter = DWutils.apply_mask(parameter, invalid_mask)
 
         return parameter
 
