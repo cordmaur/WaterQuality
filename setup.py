@@ -29,6 +29,7 @@ setuptools.setup(
     include_package_data=True,
     package_data={'waterquality': ['WaterDetect.ini', 'auxdata/*.txt']},
     install_requires=[
+        'waterdetect>=1.5.2',
         'numpy>=1.17',
         'scikit_learn>=0.23',
         'matplotlib>=3.3',

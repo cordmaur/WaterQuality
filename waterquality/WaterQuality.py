@@ -10,12 +10,20 @@ import os
 
 class DWWaterQuality(DWWaterDetect):
 
-    def run_batch(self):
+    @classmethod
+    def run_batch(cls, input_folder, output_folder, shape_file=None, product='S2_THEIA', config_file=None,
+                  post_callback=None):
 
         # # if there is an inversion, create an instance of Algorithms class, None otherwise
         # self.inversion_algos = DWInversion.DWInversionAlgos() if self.config.inversion else None
 
-        super().run_batch(self.callback_inversions)
+        super().run_batch(input_folder=input_folder,
+                          output_folder=output_folder,
+                          shape_file=shape_file,
+                          product=product,
+                          config_file=config_file,
+                          post_callback=cls.callback_inversions)
+
 
     def callback_inversions(self, dw_image, pdf_merger):
 

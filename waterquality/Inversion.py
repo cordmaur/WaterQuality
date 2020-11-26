@@ -3,6 +3,7 @@ import numpy.ma as ma
 # import l3msgen.functions.qaa as qaa
 import pandas as pd
 import os
+from waterdetect.Common import DWutils
 
 
 def nechad(rho, a, c):
@@ -62,7 +63,9 @@ class DWInversionAlgos:
         parameter = None
 
         if quality_param in self.invert_funcs.keys():
-            args = [raster_bands[band] for band in self.invert_funcs[quality_param]['bands']]
+            # create the list of bands
+            args = [DWutils.remove_negatives(raster_bands[band]) for band in self.invert_funcs[quality_param]['bands']]
+
             if self.invert_funcs[quality_param]['sensor']: args.append(sensor)
 
             parameter = self.invert_funcs[quality_param]['func'](*args)
