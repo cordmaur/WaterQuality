@@ -153,9 +153,8 @@ def main():
             print('Please specify input and output folders (-i, -o)')
 
         else:
-            water_quality = DWWaterQuality(input_folder=args.input, output_folder=args.out, shape_file=args.shp,
-                                         product=args.product, config_file=args.config)
-            water_quality.run_batch()
+            DWWaterQuality.run_batch(input_folder=args.input, output_folder=args.out, shape_file=args.shp,
+                                     product=args.product, config_file=args.config)
 
 
 # if called as a script, point to the main function of the WaterDetect package
