@@ -9,6 +9,7 @@ The WaterQuality package extends the functionalities of the WaterDetect[1] packa
 
 As an example, an inversion algorithms for total suspended matter (TSM), proposed by Nechad et al. (2010)[2] has been implemented. Refer to the notebook  `01_Example.ipynb` under the `nbs/` folder for more information<br>
 
+The Medium article [Creating water quality maps from remote sensed images with Python](https://cordmaur.medium.com/creating-water-quality-maps-from-remote-sensed-images-with-python-ca5274041f4c) has the first steps on the package. 
 
 ## Dependencies
 The required libraries are:
