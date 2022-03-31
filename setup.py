@@ -1,5 +1,5 @@
 from builtins import RuntimeError
-from waterdetect import __version__
+from waterquality import __version__
 import setuptools
 
 short_description = 'The waterquality package extends the functionality of the waterdetect package to calculate ' \
