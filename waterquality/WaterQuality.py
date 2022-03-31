@@ -1,4 +1,3 @@
-from waterquality import Inversion
 from waterdetect import DWWaterDetect
 from waterdetect.InputOutput import DWLoader
 from waterdetect.Common import DWutils, DWConfig
@@ -21,46 +20,6 @@ class DWWaterQuality(DWWaterDetect):
         self.inversion_functions = None
 
         super(DWWaterQuality, self).__init__(*args, **kwargs)
-
-    # @classmethod
-    # def _run_water_quality(cls, input_folder, output_folder, single_mode, shape_file=None, product='S2_THEIA',
-    #                       config_wd=None, config_wq=None, pekel=None):
-    #     """
-    #     @param input_folder: If single_mode=True, this is the uncompressed image product. If single_mode=False, this
-    #     is the folder that contains all uncompressed images.
-    #     @param output_folder: Output directory
-    #     @param single_mode: For batch processing (multiple images at a time), single_mode should be set to False
-    #     @param shape_file: Shape file to clip the image (optional).
-    #     @param product: The product to be processed (S2_THEIA, L8_USGS, S2_L1C or S2_S2COR)
-    #     @param config_wd: Configuration WaterDetect file. If not specified WaterDetect.ini from current dir and used
-    #                       as default
-    #     @param config_wq: Configuration WaterQuality file. If not specified WaterQuality.ini from current dir and used
-    #                       as default
-    #     @param pekel: Optional path for an occurrence base map like Pekel
-    #     @return:
-    #     """
-
-    #     # super().run_water_detect(input_folder=input_folder,
-    #     #                          output_folder=output_folder,
-    #     #                          shape_file=shape_file,
-    #     #                          product=product,
-    #     #                          config_file=config_wd,
-    #     #                          config_wq=config_wq,
-    #     #                          post_callback=cls.calc_inversion_parameter,
-    #     #                          single_mode=single_mode)
-
-    #     wq = DWWaterQuality(
-    #         input_folder=input_folder,
-    #         output_folder=output_folder,
-    #         shape_file=shape_file,
-    #         product=product,
-    #         config_file=config_wd,
-    #         config_wq=config_wq,
-    #         single_mode=single_mode,
-    #         post_callback=cls.calc_inversion_parameter
-    #     )
-
-
 
     def run_water_quality(self, inversion_functions: dict):
         self.inversion_functions = inversion_functions
@@ -256,10 +215,6 @@ def main():
             wq.run_water_quality(
                 inversion_functions=functions
             )
-
-            # DWWaterQuality._run_water_quality(input_folder=args.input, output_folder=args.out, shape_file=args.shp,
-            #                                  product=args.product, config_wd=args.config_wd, config_wq=args.config_wq,
-            #                                  single_mode=args.single)
 
 
 # if called as a script, point to the main function of the WaterDetect package

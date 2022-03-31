@@ -1,4 +1,5 @@
 from builtins import RuntimeError
+from waterdetect import __version__
 import setuptools
 
 short_description = 'The waterquality package extends the functionality of the waterdetect package to calculate ' \
@@ -9,7 +10,7 @@ long_description = short_description
 
 setuptools.setup(
     name="waterquality", # Replace with your own username
-    version="1.1.0",
+    version=__version__,
     author="Maurício Cordeiro",
     author_email="cordmaur@gmail.com",
     description=short_description,
@@ -27,9 +28,9 @@ setuptools.setup(
         'console_scripts': ['waterquality=waterquality.WaterQuality:main'],
     },
     include_package_data=True,
-    package_data={'waterquality': ['WaterQuality.ini', 'auxdata/*.txt']},
+    package_data={'waterquality': ['WaterQuality.ini']},
     install_requires=[
-        'waterdetect>=1.5.11',
+        'waterdetect>=1.5.12',
         'numpy>=1.17',
         'scikit_learn>=0.23',
         'matplotlib>=3.3',
