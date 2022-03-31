@@ -1,129 +1,164 @@
 from waterquality import Inversion
 from waterdetect import DWWaterDetect
+from waterdetect.InputOutput import DWLoader
 from waterdetect.Common import DWutils, DWConfig
 from waterquality.Common import DWConfigQuality
 import numpy as np
 from pathlib import Path
 import argparse
 import os
+import inspect
 
+import matplotlib.pyplot as plt
 
 class DWWaterQuality(DWWaterDetect):
     def __init__(self, *args, **kwargs):
 
         self.qual_config = DWConfigQuality(kwargs.pop('config_wq'))
 
+        # Initialize the following variables that will store the results and the functions to be used
+        self.quality_parameters = None
+        self.inversion_functions = None
+
         super(DWWaterQuality, self).__init__(*args, **kwargs)
 
-    @classmethod
-    def run_water_quality(cls, input_folder, output_folder, single_mode, shape_file=None, product='S2_THEIA',
-                          config_wd=None, config_wq=None, pekel=None):
+    # @classmethod
+    # def _run_water_quality(cls, input_folder, output_folder, single_mode, shape_file=None, product='S2_THEIA',
+    #                       config_wd=None, config_wq=None, pekel=None):
+    #     """
+    #     @param input_folder: If single_mode=True, this is the uncompressed image product. If single_mode=False, this
+    #     is the folder that contains all uncompressed images.
+    #     @param output_folder: Output directory
+    #     @param single_mode: For batch processing (multiple images at a time), single_mode should be set to False
+    #     @param shape_file: Shape file to clip the image (optional).
+    #     @param product: The product to be processed (S2_THEIA, L8_USGS, S2_L1C or S2_S2COR)
+    #     @param config_wd: Configuration WaterDetect file. If not specified WaterDetect.ini from current dir and used
+    #                       as default
+    #     @param config_wq: Configuration WaterQuality file. If not specified WaterQuality.ini from current dir and used
+    #                       as default
+    #     @param pekel: Optional path for an occurrence base map like Pekel
+    #     @return:
+    #     """
+
+    #     # super().run_water_detect(input_folder=input_folder,
+    #     #                          output_folder=output_folder,
+    #     #                          shape_file=shape_file,
+    #     #                          product=product,
+    #     #                          config_file=config_wd,
+    #     #                          config_wq=config_wq,
+    #     #                          post_callback=cls.calc_inversion_parameter,
+    #     #                          single_mode=single_mode)
+
+    #     wq = DWWaterQuality(
+    #         input_folder=input_folder,
+    #         output_folder=output_folder,
+    #         shape_file=shape_file,
+    #         product=product,
+    #         config_file=config_wd,
+    #         config_wq=config_wq,
+    #         single_mode=single_mode,
+    #         post_callback=cls.calc_inversion_parameter
+    #     )
+
+
+
+    def run_water_quality(self, inversion_functions: dict):
+        self.inversion_functions = inversion_functions
+        self._detect_water(post_callback=DWWaterQuality.calc_inversion_parameter)
+
+    def parse_bands(self, function):
         """
-        @param input_folder: If single_mode=True, this is the uncompressed image product. If single_mode=False, this
-        is the folder that contains all uncompressed images.
-        @param output_folder: Output directory
-        @param single_mode: For batch processing (multiple images at a time), single_mode should be set to False
-        @param shape_file: Shape file to clip the image (optional).
-        @param product: The product to be processed (S2_THEIA, L8_USGS, S2_L1C or S2_S2COR)
-        @param config_wd: Configuration WaterDetect file. If not specified WaterDetect.ini from current dir and used
-                          as default
-        @param config_wq: Configuration WaterQuality file. If not specified WaterQuality.ini from current dir and used
-                          as default
-        @param pekel: Optional path for an occurrence base map like Pekel
-        @return:
+        Get the bands from the function arguments and check if they are correctly loaded.
+        :return: A list with the bands to be used in the fuction. 
         """
+        bands = inspect.getargspec(function).args
+        
+        # check the necessary bands
+        for band in bands:
+            if band not in DWLoader.satellite_Dict[self.loader.product]['bands_names']:
+                raise Exception(f'Band {band} not available in product {self.loader.product}')
 
-        super().run_water_detect(input_folder=input_folder,
-                                 output_folder=output_folder,
-                                 shape_file=shape_file,
-                                 product=product,
-                                 config_file=config_wd,
-                                 config_wq=config_wq,
-                                 post_callback=cls.callback_inversions,
-                                 single_mode=single_mode)
+        # if everything is correct, certify the bandas are loaded
+        self.loader.load_raster_bands(bands)
 
+        return bands
 
-    def callback_inversions(self, dw_image, pdf_merger):
-        # test if the .ini file has the inversion section
-        try:
-            if self.qual_config.inversion:
-                # If there is the section and inversion is ON
-                try:
-                    self.calc_inversion_parameter(dw_image, pdf_merger)
-                except Exception as err:
-                    print('****** ERROR CALCULATING INVERSION PARAMETER ********')
-                    print(err)
-            else:
-                print('Inversion flag is set to False in WaterQuality.ini')
-
-        except Exception as err:
-            print('****** MISSING INVERSION PARAMETERS IN WATERDETECT.INI ********')
-            print('No Inversion section or inversion flag in WaterQuality.ini. Update it with waterquality -GC')
-
-        return
-
-    def calc_inversion_parameter(self, dw_image, pdf_merger_image):
+    def calc_inversion_parameter(self, dw_image, pdf_merger):
         """
         Calculate the parameter in config.parameter and saves it to the dictionary of bands.
         This will make it easier to make graphs correlating any band with the parameter.
         Also, checks if there are reports, then add the parameter to it.
-        :return: The parameter matrix
         """
-
-        inversion_algos = Inversion.DWInversionAlgos()
-
-        # POR ENQUANTO BASTA PASSARMOS O DICIONÁRIO DE BANDAS E O PRODUTO PARA TODOS
-        mask = self.loader.invalid_mask
 
         # save results to quality_parameters
         self.quality_parameters = {}
 
-        for quality_param in self.qual_config.parameter.replace(' ', '').split(','):
-            print(f'Calculating {quality_param} parameter.')
+        # loop through the functions (inversion functions) to calculate the corresponding parameters
+        for parameter_name, func_description in self.inversion_functions.items():
+            print(f'Calculating {parameter_name} parameter.')
 
-            # before calling the inversion function, certify that the necessary bands are loaded
-            self.loader.load_raster_bands(inversion_algos.invert_funcs[quality_param]['bands'])
+            try:
+                function = func_description['function']
 
-            # Ask for DWInversionAlgos to calculate the parameter matrix
-            parameter = inversion_algos.invert_param(quality_param,
-                                                     self.loader.product,
-                                                     self.loader.raster_bands,
-                                                     self.loader.invalid_mask,
-                                                     self.qual_config.negative_values)
+                # get the necessary bands from the function signature
+                bands = self.parse_bands(function) 
 
-            if parameter is not None:
+                # prepare the args
+                args = {band: dw_image.bands[band] for band in bands}
+
+                # call the function, passing the necessary  bands
+                parameter = function(**args)
+
                 # clear the parameters array and apply the Water mask, with no_data_values
                 parameter = DWutils.apply_mask(parameter,
-                                               ~(np.where(dw_image.water_mask == 255, 0, dw_image.water_mask).astype(
+                                               ~(np.where(dw_image.water_mask == -1, 0, dw_image.water_mask).astype(
                                                  bool)),
                                                -9999)
 
                 # save the parameter to be accessed
-                self.quality_parameters.update({quality_param: parameter})
+                self.quality_parameters.update({parameter_name: parameter})
 
                 # save the calculated parameter
-                self.saver.save_array(parameter, quality_param, no_data_value=-9999)
+                self.saver.save_array(parameter, parameter_name, no_data_value=-9999)
 
-                if pdf_merger_image is not None:
+                # prepare the report
+                if pdf_merger is not None:
 
                     max_value, min_value = self.calc_param_limits(parameter)
 
-                    pdf_merger_image.append(self.create_colorbar_pdf(product_name='colorbar_' + quality_param,
-                                                                     colormap=self.qual_config.colormap,
-                                                                     min_value=min_value,
-                                                                     max_value=max_value))
+                    colorbar = self.create_colorbar_pdf(
+                        param_name=parameter_name,
+                        colormap=self.qual_config.colormap,
+                        min_value=min_value,
+                        max_value=max_value, 
+                        units=func_description['units'] if 'units' in func_description else ''
+                    )
 
-                    pdf_merger_image.append(self.create_rgb_burn_in_pdf(product_name=quality_param,
-                                                                        burn_in_arrays=parameter,
-                                                                        colors=None,
-                                                                        fade=1.,
-                                                                        min_value=min_value,
-                                                                        max_value=max_value,
-                                                                        opt_relative_path=None,
-                                                                        colormap=self.qual_config.colormap,
-                                                                        uniform_distribution=self.qual_config.uniform_distribution,
-                                                                        no_data_value=-9999))
-        return parameter
+                    rgb = self.create_rgb_burn_in_pdf(
+                        product_name=parameter_name,
+                        burn_in_arrays=parameter,
+                        colors=None,
+                        fade=1.,
+                        min_value=min_value,
+                        max_value=max_value,
+                        opt_relative_path=None,
+                        colormap=self.qual_config.colormap,
+                        uniform_distribution=self.qual_config.uniform_distribution,
+                        no_data_value=-9999
+                    )
+
+                    # append the colorbar and the RGB image to the main PDF
+                    pdf_merger.append(colorbar)
+                    pdf_merger.append(rgb)
+                    
+                ## para o caso de uso de chamar direto, vamos gravar um .py chamado functions
+                ## o sistema vai pegar todas as funções do .py e processá-las, ou aqueles que estiverem no dicionário
+                ## inversion_functions = {}
+
+            except Exception as e:
+                print(f'***Error processing function {function.__name__}. Skipping it.')
+                print(e)
+                pass
 
     def calc_param_limits(self, parameter, no_data_value=-9999):
 
@@ -134,20 +169,34 @@ class DWWaterQuality(DWWaterDetect):
         # max_value = np.quantile(valid, 0.75) if self.config.max_param_value is None else self.config.max_param_value
         return max_value * 1.1, min_value * 0.8
 
+    def plot_param(self, param_name, figsize=(10, 10), **kwargs):
+        """
+        Plot a parameter using matplotlib. 
+        **kwargs will be passed to the imshow function
+        """
+
+        parameter = self.quality_parameters[param_name].copy()
+        parameter[self.dw_image.water_mask != 1] = np.nan
+
+        plt.figure(figsize=figsize)
+        plt.imshow(parameter, **kwargs)
+
 
 def main():
     """
     The main function is just a wrapper to create a entry point script called waterquality.
     With the package installed you can just call waterquality -h in the command prompt to see the options.
     """
+
     parser = argparse.ArgumentParser(description='The waterquality adds a post-processing function to waterdetect '
                                                  'package to calc water quality parameters. '
                                                  'Waterdetect should be installed in the environment.',
-                                     epilog="The waterquality uses the same WaterQuality.ini configuration file used "
-                                            "in the waterdetect package, added with a [inversion] section."
-                                            "To copy the package's default .ini file into the current directory, type:"
+                                     epilog="The waterquality uses the WaterQuality.ini configuration file as well as "
+                                            "WaterDetect.ini from waterdetect package."
+                                            "To copy the package's default .ini files into the current directory, type:"
                                             ' `waterquality -GC .` without other arguments and it will copy  '
-                                            'WaterQDetect.ini into the current directory.')
+                                            'WaterDetect.ini and WaterQuality.ini into the current directory.'
+                                            'The file inversion_functions.py should be updated with the necessary inversion functions.')
 
     parser.add_argument("-GC", "--GetConfig", help="Copy the WaterQuality.ini and the WaterDetect.ini into the current "
                                                    "directory and skips the processing. Once copied you can edit the "
@@ -168,13 +217,6 @@ def main():
                                                     'If not passed, WaterQuality.ini from current dir is used as '
                                                     'default.', type=str)
 
-    # product type (theia, sen2cor, landsat, etc.)
-    # optional shape file
-    # generate graphics (boolean)
-    # name of config file with the bands-list for detecting, saving graphics, etc. If not specified, use default name
-    #   if clip MIR or not, number of pixels to plot in graph, number of clusters, max pixels to process, etc.
-    # name of the configuration .ini file (optional, default is WaterQuality.ini in the same folder
-
     args = parser.parse_args()
 
     # If GetConfig option, just copy the WaterQuality.ini to the current working directory
@@ -194,9 +236,30 @@ def main():
             print('Please specify input and output folders (-i, -o)')
 
         else:
-            DWWaterQuality.run_water_quality(input_folder=args.input, output_folder=args.out, shape_file=args.shp,
-                                             product=args.product, config_wd=args.config_wd, config_wq=args.config_wq,
-                                             single_mode=args.single)
+            # Add current path to the system paths (to force getting the correct inversion_functions.py module)
+            import sys
+            sys.path.insert(0, '.')
+            from inversion_functions import functions
+
+            wq = DWWaterQuality(
+                input_folder=args.input,
+                output_folder=args.out,
+                shape_file=args.shp,
+                product=args.product,
+                config_file=args.config_wd,
+                config_wq=args.config_wq,
+                single_mode=args.single,
+                post_callback=DWWaterQuality.calc_inversion_parameter
+            )
+
+            # run water quality
+            wq.run_water_quality(
+                inversion_functions=functions
+            )
+
+            # DWWaterQuality._run_water_quality(input_folder=args.input, output_folder=args.out, shape_file=args.shp,
+            #                                  product=args.product, config_wd=args.config_wd, config_wq=args.config_wq,
+            #                                  single_mode=args.single)
 
 
 # if called as a script, point to the main function of the WaterDetect package

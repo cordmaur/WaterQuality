@@ -9,7 +9,7 @@ long_description = short_description
 
 setuptools.setup(
     name="waterquality", # Replace with your own username
-    version="1.0.4",
+    version="1.1.0",
     author="Maurício Cordeiro",
     author_email="cordmaur@gmail.com",
     description=short_description,
