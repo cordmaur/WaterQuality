@@ -24,6 +24,13 @@ numpy>=1.17
 waterdetect>=1.5
 ```
 
+Alternatively:
+```
+conda env create -f environment.yml
+
+conda activate waterquality
+```
+
 ## Instalation
 The easiest way to install waterquality package is with `pip` command, directly from the git repository, like so:<br>
 `pip install git+https://github.com/cordmaur/WaterQuality.git@main`
