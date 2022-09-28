@@ -42,7 +42,32 @@ cd WaterQuality
 pip install -e .
 ```
 
-### Usage:
+## Inversion Functions
+If the waterquality is being used from a Jupyter Notebook, refer to the medium story for more information on how to create new functions and pass them to the algorithm.<br>
+If it is being called from the console, the functions need to be informed in the file `inversion_functions.py`.
+
+The new fuction should be defined with the name of the band (as used in WaterDetect) as argument (e.g., Red, Green, Nir, Mir, etc.).<br>
+Once created, the functions that will be used should appear in the `functions` dictionary.<br>
+These examples are available inside the `inversion_functions.py` file:
+
+```
+# Bellow is an example extracted from Nechad et al. (2010)
+
+def nechad(Red):
+    a = 610.94
+    c = 0.2324
+    spm = 610.94 * Red / (1 - (Red/c))
+    return spm
+
+functions = {
+    'SPM_Nechad3': {
+        'function': nechad,
+        'units': 'mg/l'
+    }
+}
+```
+
+## Usage:
 Make sure waterdetect is already installed, following the instructions in https://github.com/cordmaur/WaterDetect.
 
 Once installed, a `waterquality` entry point is created in the path of the environment.
