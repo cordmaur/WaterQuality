@@ -76,12 +76,14 @@ One can check the installation and options by running `waterquality --help`. Che
 ```
 usage: waterquality [-h] [-GC] [-i INPUT] [-o OUT] [-s SHP] [-sm] [-p PRODUCT] [-cwd CONFIG_WD] [-cwq CONFIG_WQ]
 
-The waterquality adds a post-processing function to waterdetect package to calc water quality parameters. Waterdetect should be installed in the environment.
+The waterquality adds a post-processing function to waterdetect package to calc water quality parameters. Waterdetect
+should be installed in the environment.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -GC, --GetConfig      Copy the WaterQuality.ini and the WaterDetect.ini into the current directory and skips the processing. Once copied you can edit the .ini file and
-                        launch the waterquality without -c option.
+  -GC, --GetConfig      Copy the inversion_functions.py, WaterQuality.ini and the WaterDetect.ini into the current
+                        directory and skips the processing. Once copied you can edit the .ini file and launch the
+                        waterquality without -c option.
   -i INPUT, --input INPUT
                         The products input folder. Required.
   -o OUT, --out OUT     Output directory. Required.
@@ -90,13 +92,16 @@ optional arguments:
   -p PRODUCT, --product PRODUCT
                         The product to be processed (S2_THEIA, L8_USGS, S2_L1C or S2_S2COR)
   -cwd CONFIG_WD, --config_wd CONFIG_WD
-                        WaterDetect configuration file (.ini). Only needed if running WD.If not passed, WaterDetect.ini from current dir is used as default.
+                        WaterDetect configuration file (.ini). Only needed if running WD.If not passed,
+                        WaterDetect.ini from current dir is used as default.
   -cwq CONFIG_WQ, --config_wq CONFIG_WQ
-                        WaterQuality configuration file (.ini). If not passed, WaterQuality.ini from current dir is used as default.
+                        WaterQuality configuration file (.ini). If not passed, WaterQuality.ini from current dir is
+                        used as default.
 
-The waterquality uses the WaterQuality.ini configuration file as well as WaterDetect.ini from waterdetect package.To copy the package's default .ini files into the current
-directory, type: `waterquality -GC .` without other arguments and it will copy WaterDetect.ini and WaterQuality.ini into the current directory.The file
-inversion_functions.py should be updated with the necessary inversion functions.
+The waterquality uses the WaterQuality.ini configuration file as well as WaterDetect.ini from waterdetect package.To
+copy the package's default .ini files into the current directory, type: `waterquality -GC .` without other arguments
+and it will copy WaterDetect.ini and WaterQuality.ini into the current directory.The file inversion_functions.py
+should be updated with the necessary inversion functions.
 ```
 
 WaterQuality can be run from the console or through a notebook. For notebook usage, refer to the notebook `01_Example.ipynb` under `nbs/` folder.
