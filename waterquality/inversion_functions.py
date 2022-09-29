@@ -8,17 +8,14 @@
 # Any bands can be used to compute the final value. The name of the band must match the internal name used by WaterDetect
 # It is enough to put the band name as an argument in the function
 
-# Bellow is an example extracted from Nechad et al. (2010)
-
-def nechad(Red):
-    a = 610.94
-    c = 0.2324
-    spm = 610.94 * Red / (1 - (Red/c))
+# Below is an example extracted from Nechad et al. (2010)
+def nechad(Red, a=610.94, c=0.2324):
+    spm = a * Red / (1 - (Red / c))
     return spm
 
 functions = {
-    'SPM_Nechad3': {
+    'SPM_Nechad': {
         'function': nechad,
         'units': 'mg/l'
-    }
+    },
 }

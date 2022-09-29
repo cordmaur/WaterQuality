@@ -4,7 +4,7 @@ from waterquality.WaterQuality import DWWaterQuality
 import os
 from pathlib import Path
 
-__version__ = '1.1.2'
+__version__ = '1.1.3'
 
 print(f'Initializing waterquality package (version={__version__})')
 

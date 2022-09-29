@@ -34,6 +34,10 @@ class DWConfigQuality(DWBaseConfig):
         return self.get_option('Inversion', 'max_param_value', evaluate=True)
 
     @property
+    def max_param_percentile(self):
+        return self.get_option('Inversion', 'max_param_percentile', evaluate=True)
+
+    @property
     def colormap(self):
         return self.get_option('Inversion', 'colormap', evaluate=False)
 

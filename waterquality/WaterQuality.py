@@ -30,7 +30,9 @@ class DWWaterQuality(DWWaterDetect):
         Get the bands from the function arguments and check if they are correctly loaded.
         :return: A list with the bands to be used in the fuction. 
         """
-        bands = inspect.getargspec(function).args
+
+        args = inspect.signature(function)
+        bands = [arg for arg in args.parameters if args.parameters[arg].default == inspect._empty]
         
         # check the necessary bands
         for band in bands:
@@ -124,7 +126,7 @@ class DWWaterQuality(DWWaterDetect):
         valid = parameter[parameter != no_data_value]
         min_value = np.percentile(valid, 1) if self.qual_config.min_param_value is None else self.qual_config.min_param_value
         # min_value = np.quantile(valid, 0.25) if self.config.min_param_value is None else self.config.min_param_value
-        max_value = np.percentile(valid, 75) if self.qual_config.max_param_value is None else self.qual_config.max_param_value
+        max_value = np.percentile(valid, self.qual_config.max_param_percentile) if self.qual_config.max_param_value is None else self.qual_config.max_param_value
         # max_value = np.quantile(valid, 0.75) if self.config.max_param_value is None else self.config.max_param_value
         return max_value * 1.1, min_value * 0.8
 
@@ -157,9 +159,9 @@ def main():
                                             'WaterDetect.ini and WaterQuality.ini into the current directory.'
                                             'The file inversion_functions.py should be updated with the necessary inversion functions.')
 
-    parser.add_argument("-GC", "--GetConfig", help="Copy the WaterQuality.ini and the WaterDetect.ini into the current "
-                                                   "directory and skips the processing. Once copied you can edit the "
-                                                   ".ini file and launch the waterquality without -c option.",
+    parser.add_argument("-GC", "--GetConfig", help="Copy the inversion_functions.py, WaterQuality.ini and the WaterDetect.ini  "
+                                                   "into the current directory and skips the processing. Once copied you  "
+                                                   "can edit the .ini file and launch the waterquality without -c option.",
                         action="store_true")
     parser.add_argument("-i", "--input", help="The products input folder. Required.", required=False, type=str)
     parser.add_argument("-o", "--out", help="Output directory. Required.", required=False, type=str)
@@ -185,7 +187,14 @@ def main():
 
         print(f'Copying {src} into current dir.')
         dst.write_text(src.read_text())
-        print(f'WaterQuality.ini copied into {dst.parent}.')
+
+        src = Path(__file__).parent/'inversion_functions.py'
+        dst = Path(os.getcwd())/'inversion_functions.py'
+
+        print(f'Copying {src} into current dir.')
+        dst.write_text(src.read_text())
+
+        print(f'WaterQuality.ini and inversion_functions.py copied into {dst.parent}.')
 
         # Get the WaterDetect.ini using the waterdetect script
         os.system('waterdetect -GC')

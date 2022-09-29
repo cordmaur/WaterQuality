@@ -28,7 +28,7 @@ setuptools.setup(
         'console_scripts': ['waterquality=waterquality.WaterQuality:main'],
     },
     include_package_data=True,
-    package_data={'waterquality': ['WaterQuality.ini']},
+    package_data={'waterquality': ['WaterQuality.ini', 'inversion_functions.py']},
     install_requires=[
         'waterdetect>=1.5.12',
         'numpy>=1.17',
