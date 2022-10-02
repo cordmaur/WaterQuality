@@ -10,6 +10,7 @@ import inspect
 
 import matplotlib.pyplot as plt
 
+
 class DWWaterQuality(DWWaterDetect):
     def __init__(self, *args, **kwargs):
 
@@ -62,10 +63,29 @@ class DWWaterQuality(DWWaterDetect):
                 function = func_description['function']
 
                 # get the necessary bands from the function signature
-                bands = self.parse_bands(function) 
+                bands = self.parse_bands(function)
 
                 # prepare the args
                 args = {band: dw_image.bands[band] for band in bands}
+
+                non_zeros = DWutils.remove_negatives(
+                    list(args.values()),
+                    mask=dw_image.invalid_mask,
+                    negative_values=self.qual_config.negative_values
+                )
+
+                for band_key, band_nonzero in zip(args.keys(), non_zeros):
+                    band_nonzero[band_nonzero == -9999] = np.nan
+                    args[band_key] = band_nonzero
+
+                # args = {band: DWutils.remove_negatives(
+                #     dw_image.bands[band],
+                #     mask=dw_image.invalid_mask,
+                #     negative_values=self.qual_config.negative_values
+                # )[0] for band in bands}
+                #
+                # for band in args.values():
+                #     band[band == -9999] = np.nan
 
                 # call the function, passing the necessary  bands
                 parameter = function(**args)
